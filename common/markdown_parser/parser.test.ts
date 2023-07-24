@@ -19,11 +19,49 @@ Here is a [[wiki link]] and a [[wiki link|alias]].
 
 Supper`;
 
+const anywhereSample1 = `
+# This is a doc
+---
+type: section
+---
+
+* And here's an empty frontmatter block:
+  ---
+  bla: sup
+  ---
+
+And here comes a horizontal rule:
+
+---
+
+And another one:
+
+------
+
+And another one:
+
+---`;
+
+const itemSample1 = `
+* Item 1
+  ---
+  id: 1
+  ---
+* Item 2
+`;
+
 const sampleInvalid1 = `---
 name: Zef
 # This is a doc
 
 Supper`;
+
+const sampleInvalid2 = `---
+
+name: Zef
+---
+
+Sup`;
 
 Deno.test("Test parser", () => {
   const lang = buildMarkdown([]);
@@ -45,7 +83,26 @@ Deno.test("Test parser", () => {
   // Find frontmatter
   let node = findNodeOfType(tree, "FrontMatter");
   assertNotEquals(node, undefined);
+
+  // Find frontmatter anywhere
+  tree = parse(lang, anywhereSample1);
+  assertNotEquals(node, undefined);
+  console.log("Tree", JSON.stringify(tree, null, 2));
+  node = findNodeOfType(tree, "FrontMatter");
+  assertNotEquals(node, undefined);
+
+  // Find item
+  tree = parse(lang, itemSample1);
+  assertNotEquals(node, undefined);
+  console.log("Tree", JSON.stringify(tree, null, 2));
+
+  // Test invalid frontmatter
   tree = parse(lang, sampleInvalid1);
+  node = findNodeOfType(tree, "FrontMatter");
+  // console.log("Invalid node", node);
+  assertEquals(node, undefined);
+
+  tree = parse(lang, sampleInvalid2);
   node = findNodeOfType(tree, "FrontMatter");
   // console.log("Invalid node", node);
   assertEquals(node, undefined);
@@ -87,5 +144,5 @@ Deno.test("Test directive parser", () => {
   
   <!-- /query -->`;
   tree = parse(lang, orderByExample);
-  console.log("Tree", JSON.stringify(tree, null, 2));
+  // console.log("Tree", JSON.stringify(tree, null, 2));
 });

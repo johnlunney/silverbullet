@@ -1,3 +1,4 @@
+import { findNext } from "@codemirror/search";
 import {
   BlockContext,
   Language,
@@ -288,12 +289,17 @@ export const FrontMatter: MarkdownConfig = {
   parseBlock: [{
     name: "FrontMatter",
     parse: (cx, line: Line) => {
-      if (cx.parsedPos !== 0) {
-        return false;
-      }
+      const whitespaceLine = /^\s*$/;
+      // if (cx.parsedPos !== 0) {
+      //   return false;
+      // }
+
+      console.log("Got this line", line.text, cx.parsedPos);
+
       if (line.text !== "---") {
         return false;
       }
+
       const frontStart = cx.parsedPos;
       const elts = [
         cx.elt(
@@ -307,6 +313,29 @@ export const FrontMatter: MarkdownConfig = {
       let endPos = startPos;
       let text = "";
       let lastPos = cx.parsedPos;
+
+      if (whitespaceLine.exec(line.text)) {
+        cx.nextLine();
+        if (line.text === "---") {
+          // Ok, this is empty frontmatter
+          elts.push(
+            cx.elt("FrontMatterCode", startPos, endPos, []),
+          );
+          endPos = cx.parsedPos + line.text.length;
+          elts.push(cx.elt(
+            "FrontMatterMarker",
+            cx.parsedPos,
+            cx.parsedPos + line.text.length,
+          ));
+          cx.nextLine();
+          cx.addElement(cx.elt("FrontMatter", frontStart, endPos, elts));
+        } else {
+          // Ok, this is not frontmatter, just a horizontal rule
+          cx.addElement(cx.elt("HorizontalRule", frontStart, startPos));
+        }
+        return true;
+      }
+
       do {
         text += line.text + "\n";
         endPos += line.text.length + 1;
